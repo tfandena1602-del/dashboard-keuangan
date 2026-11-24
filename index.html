@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale1.0">
+  <title>Dashboard Keuangan Kopi Senja</title>
+  <style>
+    body { font-family: sans-serif; background: #fdf6ec; color: #3b2a20; margin: 0; padding: 16px; }
+    h1 { text-align: center; }
+    .kartu-wadah { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+    .kpi { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);}
+    .kpi small { color: #6f4e37; }
+    .kpi strong { display: block; font-size: 20px; margin-top: 6px; }
+    .catatan { text-align: center; font-size: 13px; margin-top: 16px; }
+
+    table { width: 100%; border-collapse: collapse; background: white; margin-top: 24px; border-radius: 12px; overflow: hidden; }
+    th,td { padding: 10px; text-align: right; }
+    th:first-child, td:first-child { text-align: left; }
+    th { background: #6f4e37; color: white; }
+    tr:nth-child(even) { background: #fdf6ec; }
+
+    h2 { text-align: center; font-size: 18px; margin-top: 28px; }
+    .grafik { background: white; border-radius: 12px; padding: 16px; margin-top: 12px; }
+
+    .grafik-donat { max-width: 380px; margin-left: auto; margin-right: auto; }
+  </style>
+</head>
+<body>
+  <h1>Dashboard Keuangan Kopi Senja</h1>
+  <div class="kartu-wadah" id="kartu"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Bulan</th>
+        <th>Pendapatan</th>
+        <th>HPP</th>
+        <th>Operasional</th>
+        <th>Laba</th>
+        <th>Margin</th>
+      </tr>
+    </thead>
+    <tbody id="badanTabel"></tbody>
+  </table>
+
+  <h2>Grafik Pendapatan dan Laba</h2>
+  <div class="grafik">
+    <canvas id="grafikBulanan"></canvas>
+  </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+  <h2>Komposisi Pendapatan</h2>
+  <div class="grafik grafik-donat">
+    <canvas id="grafikDonat"></canvas>
+  </div>
+  <p class="catatan">Data simulasi untuk tujuan portofolio.</p>
+  <script>
+    const dataKeuangan = [
+      { bulan: "Jan", pendapatan: 42000000, hpp: 18000000, operasional: 15000000 },
+      { bulan: "Feb", pendapatan: 45000000, hpp: 19500000, operasional: 15500000 },
+      { bulan: "Mar", pendapatan: 39000000, hpp: 17000000, operasional: 15000000 },
+      { bulan: "Apr", pendapatan: 52000000, hpp: 22000000, operasional: 16000000 },
+      { bulan: "Mei", pendapatan: 58000000, hpp: 24500000, operasional: 17000000 },
+      { bulan: "Jun", pendapatan: 61000000, hpp: 26000000, operasional: 17500000 }
+    ];
+
+    function rupiah(angka) {
+      return "Rp" + angka.toLocaleString("id-ID");
+    }
+
+    function jumlahkan(kolom) {
+      return dataKeuangan.reduce(function (jumlah, d) {
+        return jumlah + d[kolom];
+      }, 0);
+    }
+
+    const totalPendapatan = jumlahkan("pendapatan");
+    const totalHpp = jumlahkan("hpp");
+    const totalOperasional = jumlahkan("operasional");
+    const totalLaba = totalPendapatan - totalHpp - totalOperasional;
+    const margin = (totalLaba / totalPendapatan * 100).toFixed(1) + "%";
+
+    const daftarKpi = [
+      { judul: "Pendapatan", nilai: rupiah(totalPendapatan) },
+      { judul: "HPP", nilai: rupiah(totalHpp) },
+      { judul: "Operasional", nilai: rupiah(totalOperasional) },
+      { judul: "Laba", nilai: rupiah(totalLaba) },
+      { judul: "Margin", nilai: margin }
+    ];
+
+    const wadah = document.getElementById("kartu");
+    daftarKpi.forEach(function (k) {
+      wadah.innerHTML += '<div class="kpi"><small>' + k.judul + '</small><strong>' + k.nilai + '</strong></div>';
+    });
+
+    const badan = document.getElementById("badanTabel");
+
+    dataKeuangan.forEach(function (d) {
+      const laba = d.pendapatan - d.hpp - d.operasional;
+      const marginBulan = (laba / d.pendapatan * 100).toFixed(1) + "%";
+
+      badan.innerHTML +="<tr>"
+      +"<td>" + d.bulan + "</td>"
+      +"<td>" + rupiah(d.pendapatan) + "</td>"
+      +"<td>" + rupiah(d.hpp) + "</td>"
+      +"<td>" + rupiah(d.operasional) + "</td>"
+      +"<td>" + rupiah(laba) + "</td>"
+      +"<td>" + marginBulan + "</td>"
+      +"</tr>";
+    });
+
+    const labelBulan = dataKeuangan.map(function (d) { return d.bulan; });
+    const dataPendapatan = dataKeuangan.map(function (d) { return d.pendapatan; });
+    const dataLaba = dataKeuangan.map(function (d) {
+      return d.pendapatan - d.hpp - d.operasional;
+    });
+
+    new Chart(document.getElementById("grafikBulanan"), {
+      type: "bar",
+      data: {
+        labels: labelBulan,
+        datasets: [
+          { label: "Pendapatan", data: dataPendapatan, backgroundColor: "#6f4e37" },
+          { label: "Laba", data: dataLaba, backgroundColor: "#d9a066" }
+        ]
+      }
+    });
+
+    new Chart(document.getElementById("grafikDonat"), {
+      type: "doughnut",
+      data: {
+        labels: ["HPP", "Operasional", "Laba"],
+        datasets: [
+          {
+            data: [totalHpp, totalOperasional, totalLaba],
+            backgroundColor: ["#6f4e37", "#c4a484", "#2e7d32"]
+          }
+        ]
+      }
+    });
+  </script>
+</body>
+</html>
