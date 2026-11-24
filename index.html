@@ -23,10 +23,19 @@
     .grafik { background: white; border-radius: 12px; padding: 16px; margin-top: 12px; }
 
     .grafik-donat { max-width: 380px; margin-left: auto; margin-right: auto; }
+
+    .tombol-tahun { text-align: center; margin: 12px 0; }
+    .tombol-tahun button { padding: 8px 20px; margin: 0 4px; border: 2px solid #6f4e37; background: white; color: #6f4e37; border-radius: 20px; font-size: 16px; }
+    .tombol-tahun button.aktif { background: #6f4e37; color: white; }
   </style>
 </head>
 <body>
   <h1>Dashboard Keuangan Kopi Senja</h1>
+
+  <div class="tombol-tahun">
+    <button id="btn2025" onclick="tampilkan('2025')">2025</button>
+    <button id="btn2026" onclick="tampilkan('2026')">2026</button>
+  </div>
   <div class="kartu-wadah" id="kartu"></div>
 
   <table>
@@ -54,28 +63,44 @@
   </div>
   <p class="catatan">Data simulasi untuk tujuan portofolio.</p>
   <script>
-    const dataKeuangan = [
+    const dataTahun = {
+      "2025":[
+      { bulan: "Jan", pendapatan: 36000000, hpp: 16000000, operasional: 14000000 },
+      { bulan: "Feb", pendapatan: 38000000, hpp: 17000000, operasional: 14500000 },
+      { bulan: "Mar", pendapatan: 35000000, hpp: 16000000, operasional: 14000000 },
+      { bulan: "Apr", pendapatan: 44000000, hpp: 19500000, operasional: 15000000 },
+      { bulan: "Mei", pendapatan: 48000000, hpp: 21000000, operasional: 15500000 },
+      { bulan: "Jun", pendapatan: 50000000, hpp: 22000000, operasional: 16000000 }
+    ],
+      "2026": [
       { bulan: "Jan", pendapatan: 42000000, hpp: 18000000, operasional: 15000000 },
       { bulan: "Feb", pendapatan: 45000000, hpp: 19500000, operasional: 15500000 },
       { bulan: "Mar", pendapatan: 39000000, hpp: 17000000, operasional: 15000000 },
       { bulan: "Apr", pendapatan: 52000000, hpp: 22000000, operasional: 16000000 },
       { bulan: "Mei", pendapatan: 58000000, hpp: 24500000, operasional: 17000000 },
       { bulan: "Jun", pendapatan: 61000000, hpp: 26000000, operasional: 17500000 }
-    ];
+    ]
+  };
 
     function rupiah(angka) {
       return "Rp" + angka.toLocaleString("id-ID");
     }
 
-    function jumlahkan(kolom) {
-      return dataKeuangan.reduce(function (jumlah, d) {
+    function jumlahkan(data, kolom) {
+      return data.reduce(function (jumlah, d) {
         return jumlah + d[kolom];
       }, 0);
     }
 
-    const totalPendapatan = jumlahkan("pendapatan");
-    const totalHpp = jumlahkan("hpp");
-    const totalOperasional = jumlahkan("operasional");
+    let grafikBatang = null;
+    let grafikDonat = null;
+
+    function tampilkan(tahun) {
+      const data = dataTahun[tahun];
+    
+    const totalPendapatan = jumlahkan(data, "pendapatan");
+    const totalHpp = jumlahkan(data, "hpp");
+    const totalOperasional = jumlahkan(data, "operasional");
     const totalLaba = totalPendapatan - totalHpp - totalOperasional;
     const margin = (totalLaba / totalPendapatan * 100).toFixed(1) + "%";
 
@@ -88,16 +113,16 @@
     ];
 
     const wadah = document.getElementById("kartu");
+    wadah.innerHTML ="";
     daftarKpi.forEach(function (k) {
       wadah.innerHTML += '<div class="kpi"><small>' + k.judul + '</small><strong>' + k.nilai + '</strong></div>';
     });
 
     const badan = document.getElementById("badanTabel");
-
-    dataKeuangan.forEach(function (d) {
+    badan.innerHTML = "";
+    data.forEach(function (d) {
       const laba = d.pendapatan - d.hpp - d.operasional;
       const marginBulan = (laba / d.pendapatan * 100).toFixed(1) + "%";
-
       badan.innerHTML +="<tr>"
       +"<td>" + d.bulan + "</td>"
       +"<td>" + rupiah(d.pendapatan) + "</td>"
@@ -108,13 +133,16 @@
       +"</tr>";
     });
 
-    const labelBulan = dataKeuangan.map(function (d) { return d.bulan; });
-    const dataPendapatan = dataKeuangan.map(function (d) { return d.pendapatan; });
-    const dataLaba = dataKeuangan.map(function (d) {
+    const labelBulan = data.map(function (d) { return d.bulan; });
+    const dataPendapatan = data.map(function (d) { return d.pendapatan; });
+    const dataLaba = data.map(function (d) {
       return d.pendapatan - d.hpp - d.operasional;
     });
 
-    new Chart(document.getElementById("grafikBulanan"), {
+      if (grafikBatang) { grafikBatang.destroy(); }
+      if (grafikDonat) { grafikDonat.destroy(); }
+
+    grafikBatang = new Chart(document.getElementById("grafikBulanan"), {
       type: "bar",
       data: {
         labels: labelBulan,
@@ -125,7 +153,7 @@
       }
     });
 
-    new Chart(document.getElementById("grafikDonat"), {
+    grafikDonat = new Chart(document.getElementById("grafikDonat"), {
       type: "doughnut",
       data: {
         labels: ["HPP", "Operasional", "Laba"],
@@ -137,6 +165,12 @@
         ]
       }
     });
+
+      document.getElementById("btn2025").className = (tahun === "2025") ? "aktif" : "";
+      document.getElementById("btn2026").className = (tahun === "2026") ? "aktif" : "";
+    }
+
+    tampilkan("2026");
   </script>
 </body>
 </html>
