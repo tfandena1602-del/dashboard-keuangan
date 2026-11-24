@@ -7,6 +7,7 @@ Fitur:
 - Tabel kinerja per bulan
 - Grafik batang pendapatan vs laba
 - Grafik donat komposisi pendapatan
+- Pilihan tahun 2025/2026
 
 Data simulasi untuk tujuan portofolio.
 
